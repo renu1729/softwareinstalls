@@ -1,0 +1,2 @@
+installing SQL developer on UBUNTU 64 bit system.
+
