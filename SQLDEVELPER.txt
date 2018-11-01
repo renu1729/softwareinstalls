@@ -79,4 +79,60 @@ sudo docker pull alexeiled/docker-oracle-xe-11g
 
 docker run -d --shm-size=2g -p 1521:1521 -p 8080:8080 alexeiled/docker-oracle-xe-11g
 
+
+9. some background queries running in sql developer for finding dependencies and reference objects.
+
+------------ all dependencies query
+
+SELECT DISTINCT 
+   'SQLDEV:LINK:'||b.owner||':'||b.object_type||':'/*||lpad(' ',4*l)*/||b.object_name||':oracle.dbtools.raptor.controls.grid.DefaultDrillLink' as NAME, 
+   b.owner, 
+   b.object_type TYPE, 
+   B.OBJECT_ID, 
+   b.status,  
+   replace(b.object_type,' ','_') type_link, 
+   b.owner sdev_link_owner, 
+   b.object_name sdev_link_name, 
+   b.object_type sdev_link_type 
+FROM 
+   sys.all_objects b, 
+   (SELECT object_id, referenced_object_id, level l, rownum ord 
+    FROM public_dependency 
+    START WITH object_id = :OBJECT_ID 
+    CONNECT BY NOCYCLE PRIOR referenced_object_id = object_id) c 
+WHERE b.object_id = c.referenced_object_id 
+AND b.owner NOT IN ('SYS', 'SYSTEM') 
+AND b.object_name <> 'DUAL' 
+--order by ord
+
+
+
+---------------- all references query
+
+SELECT DISTINCT 
+  'SQLDEV:LINK:'||owner||':'||object_type||':'/*||lpad(' ',4*l)*/||object_name||':oracle.dbtools.raptor.controls.grid.DefaultDrillLink' as NAME, 
+  owner, object_type TYPE, hier.object_id, status ,   decode(replace(object_type,' ','_'),'PACKAGE_BODY','PACKAGE',replace(object_type,' ','_')) type_link 
+  FROM sys.all_objects o,  
+   (  
+          SELECT object_id, level l, rownum ord 
+             FROM public_dependency 
+           CONNECT BY NOCYCLE  PRIOR object_id = referenced_object_id 
+           START WITH referenced_object_id = :OBJECT_ID  
+) hier WHERE hier.object_id = o.object_id 
+--ORDER BY ord
+
+
+
+
+
+
+
+
+
+
+
+
+
+----TBD
+
 8.installing sqlplus client
