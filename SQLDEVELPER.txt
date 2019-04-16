@@ -1,4 +1,6 @@
+#forked projected
 installing SQL developer on UBUNTU 64 bit system.
+
 
 1. check if JAVA jdk is installed or not ,
    if installed proceed.
